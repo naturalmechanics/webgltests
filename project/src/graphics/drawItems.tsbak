@@ -304,17 +304,17 @@ function drawDesktop() {																						console.log("DrawItems called");
 
 	// drawFrameItems();
 
-	// requestAnimationFrame(drawFrameItems);
+	requestAnimationFrame(drawFrameItems);
 
 
-	// function drawFrameItems() {
+	function drawFrameItems() {
 
-	// 	drawSkyBoxFrame();																					// run the skybox specific code
-	// 	drawTaskBar();																						// run the taskbar specific code
+		drawSkyBoxFrame();																					// run the skybox specific code
+		drawTaskBar();																						// run the taskbar specific code
 
-	// 	drawIcons();																						// draw the icons for 2 applications
+		drawIcons();																						// draw the icons for 2 applications
 
-	// }
+	}
 
 
 

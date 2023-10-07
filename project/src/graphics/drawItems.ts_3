@@ -282,9 +282,7 @@ function drawFinalSkyBox() {
 
 /* APP ICON VARIABLES */
 
-
-
-	var icon_vShaderSrc = `
+var icon_vShaderSrc = `
 		attribute vec2 a_position;
 		attribute vec2 a_texCoord;
 
@@ -317,10 +315,9 @@ function drawFinalSkyBox() {
 	`;
 
 
-
-let icon_fShader : WebGLShader;
-let icon_vShader : WebGLShader;
-let icon_program  : WebGLProgram;
+let iconF_Shader : WebGLShader;
+let iconV_Shader : WebGLShader;
+let iconProgram  : WebGLProgram;
 
 var positionLocationIcon : GLint;
 var texcoordLocationIcon : GLint;
@@ -331,46 +328,40 @@ var texCord_icons : Record <number, any> = {};
 var resLoc_icons : Record <number, any> = {};
 var uImage_icons : Record <number, any> = {};
 
-var texture01 : WebGLTexture;
+
 
 /* APP ICON FUNCTIONS */
 
 function setupIconShaders() {
 
-	icon_vShader = gl.createShader(gl.VERTEX_SHADER);													// shader program placeholders created. vShader is vertex shader
-	icon_fShader = gl.createShader(gl.FRAGMENT_SHADER);												// shader program placeholders created. fShader is fragment shader
+	iconV_Shader = gl.createShader(gl.VERTEX_SHADER);							// shader program placeholders created. vShader is vertex shader
+	iconF_Shader = gl.createShader(gl.FRAGMENT_SHADER);							// shader program placeholders created. fShader is fragment shader
 
-	gl.shaderSource(icon_vShader, icon_vShaderSrc);
-	gl.compileShader(icon_vShader);
+	gl.shaderSource(iconV_Shader, icon_vShaderSrc);
+	gl.compileShader(iconV_Shader);
 
-	gl.shaderSource(icon_fShader, icon_fShaderSrc);															// the strings which are the source code of the shaders
-	gl.compileShader(icon_fShader)
+	gl.shaderSource(iconF_Shader, icon_fShaderSrc);								// the strings which are the source code of the shaders
+	gl.compileShader(iconF_Shader)												// are inserted in the placeholders; and then compiled
+
 
 }
 
 function setupIconprogram() {
 
-	icon_program = gl.createProgram();																// now, create a shader *program*, which can run the compiled shaders
-	gl.attachShader(icon_program, icon_vShader);															// compilation result attached to program
-	gl.attachShader(icon_program, icon_fShader);															// ..
+	iconProgram = gl.createProgram();											// now, create a shader *program*, which can run the compiled shaders
+	gl.attachShader(iconProgram, iconV_Shader);									// compilation result attached to program
+	gl.attachShader(iconProgram, iconF_Shader);									// ..
 
-	gl.linkProgram(icon_program);
+	gl.linkProgram(iconProgram);
 
 }
 
-
-
 function prepareIcons() {
 
+	positionLocationIcon = gl.getAttribLocation(iconProgram, "a_position");
+	texcoordLocationIcon = gl.getAttribLocation(iconProgram, "a_texCoord");
 
-
-
-																	// are inserted in the placeholders; and then compiled
-
-
-
-	positionLocationIcon = gl.getAttribLocation(icon_program, "a_position");
-	texcoordLocationIcon = gl.getAttribLocation(icon_program, "a_texCoord");
+	// gl.useProgram(iconProgram);
 
 
 	const icons = [
@@ -391,11 +382,11 @@ function prepareIcons() {
 		gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferIcon);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
 			gl.drawingBufferWidth /5 * (ii+1) , gl.drawingBufferHeight /5 ,
-			gl.drawingBufferWidth /5 * (ii+1) + 12, gl.drawingBufferHeight /5 ,
-			gl.drawingBufferWidth /5 * (ii+1) , gl.drawingBufferHeight /5  + 12,
-			gl.drawingBufferWidth /5 * (ii+1) , gl.drawingBufferHeight /5  + 12,
-			gl.drawingBufferWidth /5 * (ii+1) + 12, gl.drawingBufferHeight /5 ,
-			gl.drawingBufferWidth /5 * (ii+1) + 12, gl.drawingBufferHeight /5  + 12,
+			gl.drawingBufferWidth /5 * (ii+1) + 20, gl.drawingBufferHeight /5 ,
+			gl.drawingBufferWidth /5 * (ii+1) , gl.drawingBufferHeight /5  + 20,
+			gl.drawingBufferWidth /5 * (ii+1) , gl.drawingBufferHeight /5  + 20,
+			gl.drawingBufferWidth /5 * (ii+1) + 20, gl.drawingBufferHeight /5 ,
+			gl.drawingBufferWidth /5 * (ii+1) + 20, gl.drawingBufferHeight /5  + 20,
 		]), gl.STATIC_DRAW);																							//
 
 
@@ -406,9 +397,9 @@ function prepareIcons() {
 
 
 			localStorage.setItem("icon01top", (gl.drawingBufferHeight /5).toString());
-			localStorage.setItem("icon01bot", (gl.drawingBufferHeight /5 + 12).toString());
+			localStorage.setItem("icon01bot", (gl.drawingBufferHeight /5 + 20).toString());
 			localStorage.setItem("icon01left", (gl.drawingBufferWidth /5 * (ii+1)).toString());
-			localStorage.setItem("icon01rght", (gl.drawingBufferWidth /5 * (ii+1) + 12).toString());
+			localStorage.setItem("icon01rght", (gl.drawingBufferWidth /5 * (ii+1) + 20).toString());
 
 
 		} else if (ii == 1) {
@@ -416,9 +407,9 @@ function prepareIcons() {
 
 
 			localStorage.setItem("icon02top", (gl.drawingBufferHeight /5).toString());
-			localStorage.setItem("icon02bot", (gl.drawingBufferHeight /5 + 12).toString());
+			localStorage.setItem("icon02bot", (gl.drawingBufferHeight /5 + 20).toString());
 			localStorage.setItem("icon02left", (gl.drawingBufferWidth /5 * (ii+1)).toString());
-			localStorage.setItem("icon02rght", (gl.drawingBufferWidth /5 * (ii+1) + 12).toString());
+			localStorage.setItem("icon02rght", (gl.drawingBufferWidth /5 * (ii+1) + 20).toString());
 
 
 		}
@@ -437,7 +428,7 @@ function prepareIcons() {
 		texCord_icons[index] = texcoordBufferIcon;
 
 
-		texture01 = gl.createTexture();
+		var texture01 = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, texture01);
 
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -447,7 +438,6 @@ function prepareIcons() {
 
 		txtures_icons[index] = texture01;
 
-		ii = ii +1;
 
 	});
 }
@@ -463,134 +453,69 @@ function setupAppIcons() {
 
 function drawFinalIcons() {
 
+
+
+
+
 		const icons = [
-			'./../build/assets/images/icons/01.png',
-			'./../build/assets/images/icons/02.png',
+			'./../build/assets/images/icons/01.jpg',
+			'./../build/assets/images/icons/02.jpg',
 		]
 
 		var ii = 0 ;
 
-		gl.useProgram(icon_program);
+		gl.useProgram(iconProgram);
+
 
 		icons.forEach((icon, index) => {
 
+			gl.useProgram(iconProgram);
 
+			var resolutionLocation = gl.getUniformLocation(iconProgram, "u_resolution");
+			var u_image0Location = gl.getUniformLocation(iconProgram, "u_image0");
 
+			resLoc_icons[index] = resolutionLocation;
+			uImage_icons[index] = u_image0Location;
 
-			var positionBufferIcon = gl.createBuffer();
-
-			ii = index;
-
-
+			var positionBufferIcon = posBuff_icons[index];
+			gl.enableVertexAttribArray(positionLocationIcon);
 			gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferIcon);
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-				gl.drawingBufferWidth /5 * (ii+1) , gl.drawingBufferHeight /5 ,
-				gl.drawingBufferWidth /5 * (ii+1) + 12, gl.drawingBufferHeight /5 ,
-				gl.drawingBufferWidth /5 * (ii+1) , gl.drawingBufferHeight /5  + 12,
-				gl.drawingBufferWidth /5 * (ii+1) , gl.drawingBufferHeight /5  + 12,
-				gl.drawingBufferWidth /5 * (ii+1) + 12, gl.drawingBufferHeight /5 ,
-				gl.drawingBufferWidth /5 * (ii+1) + 12, gl.drawingBufferHeight /5  + 12,
-			]), gl.STATIC_DRAW);
+
+			var size = 2;          // 2 components per iteration
+			var type = gl.FLOAT;   // the data is 32bit floats
+			var normalize = false; // don't normalize the data
+			var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+			var offset = 0;        // start at the beginning of the buffer
+			gl.vertexAttribPointer(positionLocationIcon, size, type, normalize, stride, offset);
 
 
-
-			if (ii == 0) {
-
-
-
-				localStorage.setItem("icon01top", (gl.drawingBufferHeight /5).toString());
-				localStorage.setItem("icon01bot", (gl.drawingBufferHeight /5 + 12).toString());
-				localStorage.setItem("icon01left", (gl.drawingBufferWidth /5 * (ii+1)).toString());
-				localStorage.setItem("icon01rght", (gl.drawingBufferWidth /5 * (ii+1) + 12).toString());
-
-
-			} else if (ii == 1) {
-
-
-
-				localStorage.setItem("icon02top", (gl.drawingBufferHeight /5).toString());
-				localStorage.setItem("icon02bot", (gl.drawingBufferHeight /5 + 12).toString());
-				localStorage.setItem("icon02left", (gl.drawingBufferWidth /5 * (ii+1)).toString());
-				localStorage.setItem("icon02rght", (gl.drawingBufferWidth /5 * (ii+1) + 12).toString());
-
-
-			}
-
-			var texcoordBufferIcon = gl.createBuffer();
+			var texcoordBufferIcon = texCord_icons [index]
+			gl.enableVertexAttribArray(texcoordLocationIcon);
 			gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBufferIcon);
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-				0.0,  0.0,
-				1.0,  0.0,
-				0.0,  1.0,
-				0.0,  1.0,
-				1.0,  0.0,
-				1.0,  1.0,
-			]), gl.STATIC_DRAW);
+			var size = 2;          // 2 components per iteration
+			var type = gl.FLOAT;   // the data is 32bit floats
+			var normalize = false; // don't normalize the data
+			var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+			var offset = 0;        // start at the beginning of the buffer
+			gl.vertexAttribPointer(texcoordLocationIcon, size, type, normalize, stride, offset);
 
-			texture01 = gl.createTexture();
-			gl.bindTexture(gl.TEXTURE_2D, texture01);
+			gl.uniform2f(resLoc_icons[index], gl.canvas.width, gl.canvas.height);
 
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+			gl.uniform1i(uImage_icons[index], 0);
 
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, txtures_icons[index]);
 
-			var image = new Image();
-			image.src = icon;
-
-			image.addEventListener('load', function() {
-
-				gl.bindTexture(gl.TEXTURE_2D, texture01);
-				gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-				var resolutionLocation = gl.getUniformLocation(icon_program, "u_resolution");
-				var u_image0Location = gl.getUniformLocation(icon_program, "u_image0");
-
-
-				gl.enableVertexAttribArray(positionLocationIcon);
-				gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferIcon);
-
-				var size = 2;          // 2 components per iteration
-				var type = gl.FLOAT;   // the data is 32bit floats
-				var normalize = false; // don't normalize the data
-				var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-				var offset = 0;        // start at the beginning of the buffer
-				gl.vertexAttribPointer(positionLocationIcon, size, type, normalize, stride, offset);
-
-
-				gl.enableVertexAttribArray(texcoordLocationIcon);
-				gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBufferIcon);
-				var size = 2;          // 2 components per iteration
-				var type = gl.FLOAT;   // the data is 32bit floats
-				var normalize = false; // don't normalize the data
-				var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-				var offset = 0;        // start at the beginning of the buffer
-				gl.vertexAttribPointer(texcoordLocationIcon, size, type, normalize, stride, offset);
-
-				gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
-
-				gl.uniform1i(u_image0Location, 0);
-
-				gl.activeTexture(gl.TEXTURE0);
-				gl.bindTexture(gl.TEXTURE_2D, texture01);
-
-				gl.drawArrays(gl.TRIANGLES, 0, 6);
+			gl.drawArrays(gl.TRIANGLES, 0, 6);
 
 
 
-			});
 
 
 
-			ii = ii +1;
+
 
 		});
-
 
 
 
@@ -614,7 +539,7 @@ function drawDesktop() {
 
 	drawFinalSkyBox();
 	drawFinalIcons();
-	//requestAnimationFrame(drawDesktop);
+	requestAnimationFrame(drawDesktop);
 
 
 }
@@ -624,7 +549,6 @@ getHTMLTargets();
 createDrawQueue();
 
 
-gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 requestAnimationFrame(drawDesktop);
 
 

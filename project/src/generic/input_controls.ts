@@ -1,5 +1,5 @@
 import * as assets from "../index.js";
-import * as drawing from "../graphics/drawItems.js";
+//import * as drawing from "../graphics/drawItems.js";
 
 const xSlider = document.getElementById('xPosition') as HTMLInputElement;						console.log("picked up x value slider"); console.log(xSlider);
 
@@ -71,14 +71,14 @@ skyBoxLoader.addEventListener('change', (e) => {
 	// }
 	// //alert(URL.createObjectURL(skyBoxLoader.files[0]));
 
-	var filePath = skyBoxLoader.value;
-	console.log(filePath);
-	var reader = new FileReader();
-	reader.onload = function (e) {
-		assets.loadedAssets[0] = filePath;
-		console.log(assets.loadedAssets[0]);
-		drawing.createDrawQueue();
-	};
-	reader.readAsDataURL(skyBoxLoader.files[0]);
+	// var filePath = skyBoxLoader.value;
+	// console.log(filePath);
+	// var reader = new FileReader();
+	// reader.onload = function (e) {
+	// 	assets.loadedAssets[0] = e.target.result;
+	// 	console.log(assets.loadedAssets[0]);
+	// 	drawing.createDrawQueue();
+	// };
+	// reader.readAsDataURL(skyBoxLoader.files[0]);
 
 });
