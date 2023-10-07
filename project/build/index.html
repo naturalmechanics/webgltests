@@ -1,0 +1,166 @@
+<?xml version="1.0"?>
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebGL Demo Project : Group 9</title>
+  </head>
+  <body>
+    <div style="width:100vw;height:90vh;display:flex;flex-direction:row;">
+      <div style="width:70vw;height:90vh;display:flex;flex-direction:row;margin:10px;">
+        <canvas id="canvas" style="height:800px;width:1320px;margin:2px;border:1px solid black;"/>
+      </div>
+      <div style="width:30vw;height:100vw;display:flex;flex-direction:column;">
+        <div style="margin-bottom:8px;"> Camera Position </div>
+        <div style="width: 100%; display:flex; flex-direction:row;">
+          <div>Camera X Position </div>
+          <div>
+            <input type="range" min="-100" max="100" value="0" class="slider" id="xPosition"/>
+          </div>
+          <div style="margin-left:5px;"> X axis Log? </div>
+          <div>
+            <input type="checkbox" id="logX" name="Log X Scale"/>
+          </div>
+        </div>
+        <div style="width: 100%; display:flex; flex-direction:row;">
+          <div>Camera Y Position </div>
+          <div>
+            <input type="range" min="-100" max="100" value="0" class="slider" id="yPosition"/>
+          </div>
+          <div style="margin-left:5px;"> Y axis Log? </div>
+          <div>
+            <input type="checkbox" id="logY" name="Log Y Scale"/>
+          </div>
+        </div>
+        <div style="width: 100%; display:flex; flex-direction:row;">
+          <div>Camera Z Position </div>
+          <div>
+            <input type="range" min="-100" max="100" value="0" class="slider" id="zPosition"/>
+          </div>
+          <div style="margin-left:5px;"> Z axis Log? </div>
+          <div>
+            <input type="checkbox" id="logZ" name="Log Z Scale"/>
+          </div>
+        </div>
+        <br/>
+        <br/>
+        <br/>
+        <div style="margin-top:30px;margin-bottom:8px;">Select Renderer [Auto Update] </div>
+        <div style="width: 100%; display:flex; flex-direction:row;">
+          <div>RayTracer </div>
+          <input type="radio" id="rend0" name="rend" value="00"/>
+        </div>
+        <div style="width: 100%; display:flex; flex-direction:row;">
+          <div>Rasterizer </div>
+          <input type="radio" id="rend1" name="rend" value="01" checked/>
+        </div>
+        <br/>
+        <br/>
+        <br/>
+
+        <div style="margin-top:30px;margin-bottom:8px;""> Colors </div>
+
+        <div style="width: 100%; display:flex; flex-direction:row;">
+          <div>Color Red Component </div>
+          <div style="margin-left:auto; margin-right:20px;">
+            <input type="text" min="-100" max="100" value="100" class="text" id="Red"/>
+          </div>
+
+        </div>
+
+        <div style="width: 100%; display:flex; flex-direction:row;">
+          <div>Color Green Component </div>
+          <div style="margin-left:auto; margin-right:20px;">
+            <input type="text" min="-100" max="100" value="100" class="text" id="Green"/>
+          </div>
+
+        </div>
+
+        <div style="width: 100%; display:flex; flex-direction:row;">
+          <div>Color Blue Component </div>
+          <div style="margin-left:auto; margin-right:20px;">
+            <input type="text" min="-100" max="100" value="100" class="text" id="Blue"/>
+          </div>
+
+        </div>
+
+        <div style="width: 100%; display:flex; flex-direction:row;">
+          <div>Chosen Color </div>
+          <div style="width:50px;">
+
+          </div>
+
+        </div>
+
+
+
+
+        <div style="margin-top:30px;margin-bottom:8px;">Textures </div>
+
+        <div style="width: 100%; display:flex; flex-direction:row;">
+          <div style="width: 100%; display:flex; flex-direction:column;">
+			<div>Icon 01 </div>
+			<div style="height:32px;" id="icon01Tex">
+
+			</div>
+			<input type="file" id="icon01" name="icon01" accept="image/png, image/jpeg" />
+          </div>
+
+          <div style="width: 100%; display:flex; flex-direction:column;">
+			<div>Icon 02 </div>
+			<div style="height:32px;" id="icon02Tex">
+
+			</div>
+			<input type="file" id="icon02" name="icon02" accept="image/png, image/jpeg" />
+          </div>
+
+
+
+        </div>
+
+        <div style="width: 100%; display:flex; flex-direction:row;margin-top:30px;margin-bottom:8px;">
+          <div style="width: 100%; display:flex; flex-direction:column;">
+			<div>Skybox </div>
+			<div style="height:32px;" id="skyboxTex">
+
+			</div>
+			<input type="file" id="skybox" name="skybox" accept="image/png, image/jpeg" />
+          </div>
+
+          <div style="width: 100%; display:flex; flex-direction:column;">
+			<div>Taskbar </div>
+			<div style="height:32px;" id="taskbarTex">
+
+			</div>
+			<input type="file" id="taskbar" name="taskbar" accept="image/png, image/jpeg" />
+          </div>
+
+
+
+        </div>
+
+
+        <div style="width: 100%; display:flex; flex-direction:row;margin-top:30px;margin-bottom:8px;">
+          <div style="width: 100%; display:flex; flex-direction:column;">
+			<div>Application Pane </div>
+			<div style="height:32px;" id="appTex">
+
+			</div>
+			<input type="file" id="apppane" name="apppane" accept="image/png, image/jpeg" />
+          </div>
+
+
+
+
+        </div>
+
+
+
+      </div>
+    </div>
+    <script type="module" src="index.js"></script> 														<!-- This file holds the baseline commands, and will be fired first -->
+	<script type="module" src="globals.js"></script> 													<!-- This file checks and sets the global values -->
+	<script type="module" src="graphics/drawItems.js"></script> 													<!-- This file checks and sets the global values -->
+	<script type="module" src="generic/input_controls.js"></script> 													<!-- This file checks and sets the global values -->
+
+  </body>
+</html>

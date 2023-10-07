@@ -1,0 +1,20 @@
+import {camera} from './globals.d';
+
+console.log("input controls on");
+
+
+const xSlider = document.getElementById('xPosition') as HTMLInputElement;
+
+    xSlider.addEventListener('input', () => {
+    camera.camera_xPosition_webGL_coords = parseFloat(xSlider.value);
+    console.log("camera x position is: " + camera.camera_xPosition_webGL_coords);
+});
+
+    console.log("input controls X on");
+
+
+
+
+    console.log("input controls Y on");
+
+    export {};

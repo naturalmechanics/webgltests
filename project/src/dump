@@ -1,0 +1,708 @@
+declare var camera_xPosition_webGL_coords : number;
+	declare var camera_yPosition_webGL_coords : number;
+	declare var camera_zPosition_webGL_coords : number;
+
+
+
+																								console.log("can access globals"); console.log(cameraCoords.camera_xPosition_webGL_coords);
+
+/*
+
+*/
+
+
+// global.
+// const ySlider = document.getElementById('yPosition') as HTMLInputElement;
+//
+// 	ySlider.addEventListener('input', () => {
+// 	global.camera_yPosition_webGL_coords = parseFloat(ySlider.value);
+// 	console.log("camera y position is: " + global.camera_yPosition_webGL_coords);
+// });
+//
+// 	console.log("input controls Y on");
+
+
+<script type="module" src = "dist/debug_controls.js"></script>								<!-- This file produces debug information to be printed in a div -->
+	<script type="module" src = "dist/graphics.js"></script>									<!-- This file performs graphical computations -->
+																								<!-- It automatically imports math libraries as needed -->
+	<script type="module" src = "dist/render.js"></script>										<!-- This is the file that communicates with the webGL layer -->
+																								<!-- It recieves computations (such as vertices, interpolations ..)
+																									 from graphics.js, and then dumps the result in webGL layer-->
+	<!--<script type="module" src = "dist/index.js"></script>-->										<!-- This file holds the baseline commands -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	const vShader = gl.createShader(gl.VERTEX_SHADER);														// shader program placeholders created. vShader is vertex shader
+	const fShader = gl.createShader(gl.FRAGMENT_SHADER);													// shader program placeholders created. fShader is fragment shader
+
+	gl.shaderSource(vShader, vShaderSource);
+	gl.compileShader(vShader);
+
+	gl.shaderSource(fShader, fShaderSource);																// the strings which are the source code of the shaders
+	gl.compileShader(fShader)																				// are inserted in the placeholders; and then compiled
+
+	const program = gl.createProgram();																		// now, create a shader *program*, which can run the compiled shaders
+	gl.attachShader(program, vShader);																		// compilation result attached to program
+	gl.attachShader(program, fShader);																		// ..
+	gl.linkProgram(program);
+	gl.useProgram(program);																					// Tell gl that these are to be used.
+	const programInfo = setupShaderInput(gl, program, vShaderSource, fShaderSource);						//
+
+	const skbV, skbn, skbT = parseObj(cubeObj, [0, 0, 0], [0, 0, 0]);												// new skyBox created
+	const vertexBuffer = new GLBuffer(gl, gl.ARRAY_BUFFER, skbV, gl.STATIC_DRAW);				// vertex buffer added
+
+	var texture : any;
+
+
+	Promise.all([
+		loadImage(rightTexture),
+		loadImage(leftTexture),
+		loadImage(upTexture),
+		loadImage(downTexture),
+		loadImage(backTexture),
+		loadImage(frontTexture),																			// Here the textures are being loaded, therefore the "await" trick is used
+	]).then((images:any) => {																				// once they finish loading
+		texture = gl.createTexture();																		// create a texture
+		gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);														// Texture is bound to a cube map
+
+		gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);							// these are set to clamp to the edges of faces
+
+		images.forEach((image: any, index: number) => {														// for each image, "index" automatically get the index in the images array
+			gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + index, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image); // 2D image texture created
+		});
+	});
+
+	vertexBuffer.bind(gl);
+	gl.vertexAttribPointer(programInfo.attributeLocations.position, 3, gl.FLOAT, false, 0, 0);
+
+
+	// gl.useProgram(program);
+ //
+ //    gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+ //
+	// viewMatrix = createMat4();
+ //
+ //
+ //    gl.uniformMatrix4fv(programInfo.uniformLocations.viewMatrix, false, viewMatrix);
+ //    gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
+ //
+ //    vertexBuffer.bind(gl);
+	// gl.vertexAttribPointer(programInfo.attributeLocations.position, 3, gl.FLOAT, false, 0, 0);
+ //
+ //    gl.drawArrays(gl.TRIANGLES, 0, vertexBuffer.data.length / 3);
+
+	gl.useProgram(program);
+	gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+
+	viewMatrix = createMat4(); // Define your view matrix
+	projectionMatrix = createMat4(); // Define your projection matrix
+
+	gl.uniformMatrix4fv(programInfo.uniformLocations.viewMatrix, false, viewMatrix);
+	gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
+
+	vertexBuffer.bind(gl);
+	gl.vertexAttribPointer(programInfo.attributeLocations.position, 3, gl.FLOAT, false, 0, 0);
+
+	gl.drawArrays(gl.TRIANGLES, 0, vertexBuffer.data.length / 3);
+
+
+}
+
+const canvas = document.querySelector('canvas');
+const gl = canvas.getContext('webgl');
+
+if ( canvas && gl) drawSkyBox(); // Call the drawSkyBox function
+
+/*
+function createMat4(): number[] {
+
+  let out = new array4x4(16);
+
+  if (array4x4 != Float32Array) {
+    out[1] = 0;
+    out[2] = 0;
+    out[3] = 0;
+
+    out[4] = 0;
+    out[6] = 0;
+    out[7] = 0;
+
+    out[8] = 0;
+    out[9] = 0;
+    out[11] = 0;
+
+    out[12] = 0;
+    out[13] = 0;
+    out[14] = 0;
+  }
+
+  out[0] = 1;
+  out[5] = 1;
+  out[10] = 1;
+  out[15] = 1;
+
+  return out;
+}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function loadImage(src: string) : any {
+    const img = new Image();
+
+    let _resolve;
+    const p = new Promise((resolve) => _resolve = resolve);
+
+    img.onload = () => {
+        _resolve(img);
+    }
+
+    img.src = src;
+
+    return p;
+}
+
+
+function setupShaderInput(gl, program, vShaderSource, fShaderSource) : any {
+    const vShaderInfo = extract(vShaderSource);
+    const fShaderInfo = extract(fShaderSource);
+
+    const attributes = vShaderInfo.attributes;
+    const uniforms = [
+        ...vShaderInfo.uniforms,
+        ...fShaderInfo.uniforms,
+    ];
+
+    const attributeLocations = attributes.reduce((attrsMap, attr) => {
+        attrsMap[attr.name] = gl.getAttribLocation(program, attr.name);
+        return attrsMap;
+    }, {});
+
+    attributes.forEach((attr) => {
+        gl.enableVertexAttribArray(attributeLocations[attr.name]);
+    });
+
+    const uniformLocations = uniforms.reduce((uniformsMap, uniform) => {
+        uniformsMap[uniform.name] = gl.getUniformLocation(program, uniform.name);
+        return uniformsMap;
+    }, {});
+
+    return {
+        attributeLocations,
+        uniformLocations,
+    }
+}
+
+function createMat4(): Float32Array {
+  const out = new Float32Array(16); // Create a 4x4 identity matrix
+
+  out[0] = 1;
+  out[5] = 1;
+  out[10] = 1;
+  out[15] = 1;
+
+  return out;
+}
+
+
+function parseObj(objSource:string): any {
+    const _vertices = [];
+    const _normals = [];
+    const _texCoords = [];
+
+    const vertexIndices = [];
+    const normalIndices = [];
+    const texCoordIndices = [];
+
+    objSource.split('\n').forEach(line => {
+        if (line.startsWith('v ')) {
+            _vertices.push(parseVec(line, 'v '));
+        }
+
+        if (line.startsWith('vn ')) {
+            _normals.push(parseVec(line, 'vn '));
+        }
+
+        if (line.startsWith('vt ')) {
+            _texCoords.push(parseVec(line, 'vt '));
+        }
+
+        if (line.startsWith('f ')) {
+            const parsedFace = parseFace(line);
+
+            vertexIndices.push(...parsedFace.map(face => face[0] - 1));
+            texCoordIndices.push(...parsedFace.map(face => face[1] - 1));
+            normalIndices.push(...parsedFace.map(face => face[2] - 1));
+        }
+    });
+
+    const vertices = [];
+    const normals = [];
+    const texCoords = [];
+
+    for (let i = 0; i < vertexIndices.length; i++) {
+        const vertexIndex = vertexIndices[i];
+        const normalIndex = normalIndices[i];
+        const texCoordIndex = texCoordIndices[i];
+
+        const vertex = _vertices[vertexIndex];
+        const normal = _normals[normalIndex];
+        const texCoord = _texCoords[texCoordIndex];
+
+        vertices.push(...vertex);
+        normals.push(...normal);
+
+        if (texCoord) {
+            texCoords.push(...texCoord);
+        }
+    }
+
+    return {
+        vertices: new Float32Array(vertices),
+        normals: new Float32Array(normals),
+        texCoords: new Float32Array(texCoords),
+    };
+}
+
+
+/*
+function createMat4() {
+
+	let out = new ARRAY_TYPE(16);								// this will  try to set everything as zero
+
+	if (ARRAY_TYPE != Float32Array) {
+
+		// 0th element is 1
+		out[1] = 0;
+		out[2] = 0;
+		out[3] = 0;
+
+		out[4] = 0;
+		// 5th element is 1
+		out[6] = 0;
+		out[7] = 0;
+
+		out[8] = 0;
+		out[9] = 0;
+		// 10th is 1
+		out[11] = 0;
+
+		out[12] = 0;
+		out[13] = 0;
+		out[14] = 0;
+		// 15th is 1
+	}
+
+	out[0] = 1;
+	out[5] = 1;
+	out[10] = 1;
+	out[15] = 1;
+
+	return out;													// THIS SHOULD RETURN A 4X4= 16 ELEMENT MATRIX
+
+}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const vShaderSource = `
+
+		attribute vec4 a_position;
+		varying vec4 v_position;
+		void main() {
+			v_position = a_position;
+			gl_Position = a_position;
+			gl_Position.z = 1.0;
+		}
+	`; // we write the shader source directly in the code for simplicity
+    const fShaderSource = `
+
+		precision mediump float;
+
+		uniform samplerCube u_skybox;
+		uniform mat4 u_viewDirectionProjectionInverse;
+
+		varying vec4 v_position;
+		void main() {
+			vec4 t = u_viewDirectionProjectionInverse * v_position;
+			gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w));
+		}
+	`; // also the vertexshader is directly added here
+    const vShader = gl.createShader(gl.VERTEX_SHADER); // shader program placeholders created. vShader is vertex shader
+    const fShader = gl.createShader(gl.FRAGMENT_SHADER); // shader program placeholders created. fShader is fragment shader
+    gl.shaderSource(vShader, vShaderSource);
+    gl.compileShader(vShader);
+    gl.shaderSource(fShader, fShaderSource); // the strings which are the source code of the shaders
+    gl.compileShader(fShader); // are inserted in the placeholders; and then compiled
+    const program = gl.createProgram(); // now, create a shader *program*, which can run the compiled shaders
+    gl.attachShader(program, vShader); // compilation result attached to program
+    gl.attachShader(program, fShader); // ..
+    gl.linkProgram(program);
+    var positionLocation = gl.getAttribLocation(program, "a_position"); // as marked above , the typescript will grab on "a_positions"
+    // the vertex data will go there
+    var skyboxLocation = gl.getUniformLocation(program, "u_skybox"); // same here in the fragmentshader
+    var viewDirectionProjectionInverseLocation = gl.getUniformLocation(program, "u_viewDirectionProjectionInverse");
+    var positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    var positions = new Float32Array([
+        -1, -1,
+        1, -1,
+        -1, 1,
+        -1, 1,
+        1, -1,
+        1, 1,
+    ]);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+    const faceInfos = [
+        {
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+            url: './../build/assets/images/skybox/front.JPG',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+            url: './../build/assets/images/skybox/back.JPG',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+            url: './../build/assets/images/skybox/left.JPG',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+            url: './../build/assets/images/skybox/right.JPG',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+            url: './../build/assets/images/skybox/up.JPG',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+            url: './../build/assets/images/skybox/down.JPG',
+        },
+    ];
+    //document.getElementById("test").style.backgroundImage= "url('./../build/assets/images/skybox/down.JPG')";
+    faceInfos.forEach((faceInfo) => {
+        const { target, url } = faceInfo;
+        // Upload the canvas to the cubemap face.
+        const level = 0;
+        const internalFormat = gl.RGBA;
+        const width = 512;
+        const height = 512;
+        const format = gl.RGBA;
+        const type = gl.UNSIGNED_BYTE;
+        // setup each face so it's immediately renderable
+        gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);
+        // Asynchronously load an image
+        const image = new Image();
+        image.src = url;
+        image.addEventListener('load', function () {
+            // Now that the image has loaded make copy it to the texture.
+            gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+            gl.texImage2D(target, level, internalFormat, format, type, image);
+            gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+        });
+    });
+    console.log(gl);
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.canvas.width = 600;
+    gl.canvas.height = 600;
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.clearColor(0.0, 0.5, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(program);
+    gl.enableVertexAttribArray(positionLocation);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    var size = 2; // 2 components per iteration
+    var type = gl.FLOAT; // the data is 32bit floats
+    var normalize = false; // don't normalize the data
+    var stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
+    var offset = 0; // start at the beginning of the buffer
+    gl.vertexAttribPointer(positionLocation, size, type, normalize, stride, offset);
+    var aspect = canvas.clientWidth / canvas.clientHeight;
+    var viewDirectionProjectionInverseMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+    gl.uniformMatrix4fv(viewDirectionProjectionInverseLocation, false, viewDirectionProjectionInverseMatrix);
+    gl.uniform1i(skyboxLocation, 0);
+    gl.depthFunc(gl.LEQUAL);
+    gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
+    console.log("Skybox drawn");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	const vShaderSource = `
+
+		attribute vec4 a_position;																			// Typscript will grasp here,a nd set the values
+		varying vec4 v_position;
+		void main() {
+			v_position = a_position;
+			gl_Position = a_position;
+			gl_Position.z = 1.0;
+		}
+	`;																										// we write the shader source directly in the code for simplicity
+
+
+	const fShaderSource = `
+
+		precision mediump float;																			// here, we need to set the precision
+
+		uniform samplerCube u_skybox;																		// typescript will grasp here
+		uniform mat4 u_viewDirectionProjectionInverse;
+
+		varying vec4 v_position;
+		void main() {
+			vec4 t = u_viewDirectionProjectionInverse * v_position;
+			gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w));
+		}
+	`																										// also the vertexshader is directly added here
+
+	const vShader = gl.createShader(gl.VERTEX_SHADER);														// shader program placeholders created. vShader is vertex shader
+	const fShader = gl.createShader(gl.FRAGMENT_SHADER);													// shader program placeholders created. fShader is fragment shader
+
+	gl.shaderSource(vShader, vShaderSource);
+	gl.compileShader(vShader);
+
+	gl.shaderSource(fShader, fShaderSource);																// the strings which are the source code of the shaders
+	gl.compileShader(fShader)																				// are inserted in the placeholders; and then compiled
+
+	const program = gl.createProgram();																		// now, create a shader *program*, which can run the compiled shaders
+	gl.attachShader(program, vShader);																		// compilation result attached to program
+	gl.attachShader(program, fShader);																		// ..
+
+	gl.linkProgram(program);
+
+	var positionLocation = gl.getAttribLocation(program, "a_position");										// as marked above , the typescript will grab on "a_positions"
+																											// the vertex data will go there
+	var skyboxLocation = gl.getUniformLocation(program, "u_skybox");										// same here in the fragmentshader
+	var viewDirectionProjectionInverseLocation = gl.getUniformLocation(program, "u_viewDirectionProjectionInverse");
+
+	var positionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+	var positions = new Float32Array(
+		[
+		-1, -1,
+		1, -1,
+		-1,  1,
+		-1,  1,
+		1, -1,
+		1,  1,
+		]
+	);
+	gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+	var texture = gl.createTexture();
+	gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+
+	const faceInfos = [
+		{
+		target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+		url: './../build/assets/images/skybox/front.JPG',
+		},
+		{
+		target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+		url: './../build/assets/images/skybox/back.JPG',
+		},
+		{
+		target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+		url: './../build/assets/images/skybox/left.JPG',
+		},
+		{
+		target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+		url: './../build/assets/images/skybox/right.JPG',
+		},
+		{
+		target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+		url: './../build/assets/images/skybox/up.JPG',
+		},
+		{
+		target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+		url: './../build/assets/images/skybox/down.JPG',
+		},
+	];
+
+	//document.getElementById("test").style.backgroundImage= "url('./../build/assets/images/skybox/down.JPG')";
+
+	faceInfos.forEach((faceInfo) => {
+		const {target, url} = faceInfo;
+
+		// Upload the canvas to the cubemap face.
+		const level = 0;
+		const internalFormat = gl.RGBA;
+		const width = 512;
+		const height = 512;
+		const format = gl.RGBA;
+		const type = gl.UNSIGNED_BYTE;
+
+		// setup each face so it's immediately renderable
+		gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);
+
+		// Asynchronously load an image
+		const image = new Image();
+		image.src = url;
+		image.addEventListener('load', function() {
+			// Now that the image has loaded make copy it to the texture.
+			gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+			gl.texImage2D(target, level, internalFormat, format, type, image);
+			gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+		});
+	});
+
+	console.log(gl);
+
+	gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+
+
+	gl.canvas.width = 600;
+	gl.canvas.height = 600;
+
+
+
+	gl.enable(gl.CULL_FACE);
+	gl.enable(gl.DEPTH_TEST);
+
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.clearColor(0.0, 0.5, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+	gl.useProgram(program);
+
+	gl.enableVertexAttribArray(positionLocation);
+	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+
+	var size = 2;																							// 2 components per iteration
+	var type = gl.FLOAT;																					// the data is 32bit floats
+	var normalize = false;																					// don't normalize the data
+	var stride = 0;																							// 0 = move forward size * sizeof(type) each iteration to get the next position
+	var offset = 0;																							// start at the beginning of the buffer
+	gl.vertexAttribPointer(positionLocation, size, type, normalize, stride, offset);
+
+
+
+	var aspect = canvas.clientWidth / canvas.clientHeight;
+
+	var viewDirectionProjectionInverseMatrix = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1];
+	gl.uniformMatrix4fv( viewDirectionProjectionInverseLocation, false, viewDirectionProjectionInverseMatrix);
+
+	gl.uniform1i(skyboxLocation, 0);
+	gl.depthFunc(gl.LEQUAL);
+	gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
+

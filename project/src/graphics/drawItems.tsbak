@@ -1,0 +1,531 @@
+/*
+* This file contains all the information
+* needed to draw the basics.
+*/
+
+// ------------------------- load assets ----------------------------------- //
+
+//import cubeObj from '../build/assets/objects/cube.obj';														// a 3d CUBE object with vertices and nodes, and faces defined
+											// note that the camera is "inside" the cube
+
+let MatType = Float32Array;
+
+// ------------------------- Some  basics ---------------------------------- //
+
+const eps = 0.00000001;
+const array4x4 = (typeof Float32Array !== 'undefined') ? Float32Array : Array;
+
+var skyBoxLoaded = 0;
+var icon01Loaded = 0;
+var icon02Loaded = 0;
+
+
+
+
+// -------------------- Drawing the Canvas Pane itself --------------------- //
+/*
+* Step 1 : Draw the background of the GL Canvas (SkyBox)
+* * Ensure, that both renderes can work with it
+* Step 2 : Draw the Launch Icons
+* * The requirement does not require that the launch icons need to be mobile [OPTIONAL]
+* * There will be two application icons
+* * There will be one Task Bar.
+* * * * Set Task bar to the bottom (Not movable)
+* * * * Set height = 32 px constant
+* * * * Set texture Constant
+* These are immobile 2D objects
+*
+*/
+
+function drawDesktop() {																						console.log("DrawItems called");
+
+	/*
+	 * This function will be called when the canvas in the HTML file finishes loading
+	 * It can be the case, that the canvas is loaded before the TS (compiled to JS) file is loaded.
+	 * Therefore, it will be called again at the end of the function definition
+	 * Whichever happens at the correct time, will draw the Skybox
+	 *
+	 * INPUTS : NONE
+	 * OUTPUTS : ALSO NONE
+	 * JOB : Renders the textures of a cube that will be the skybox
+	 *     : overlays a task bar
+	 *     : overlays application icons
+	 *
+	 */
+
+
+	//-------------------- get HTMl target elements -------------------//
+	const canvas = document.querySelector('canvas');
+	const gl = canvas.getContext('webgl');
+
+
+	//-------------------- skybox shaders -----------------------------//
+	const vShaderSource = `
+
+		attribute vec4 a_position;																			// Typscript will grasp here,a nd set the values
+		varying vec4 v_position;
+		void main() {
+			v_position = a_position;
+			gl_Position = a_position;
+			gl_Position.z = 1.0;
+		}
+	`;																										// we write the shader source directly in the code for simplicity
+
+
+	const fShaderSource = `
+
+		precision mediump float;																			// here, we need to set the precision
+
+		uniform samplerCube u_skybox;																		// typescript will grasp here
+		uniform mat4 u_viewDirectionProjectionInverse;
+
+		varying vec4 v_position;
+		void main() {
+			vec4 t = u_viewDirectionProjectionInverse * v_position;
+			gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w));
+		}
+	`																										// also the vertexshader is directly added here
+
+	const vShader = gl.createShader(gl.VERTEX_SHADER);														// shader program placeholders created. vShader is vertex shader
+	const fShader = gl.createShader(gl.FRAGMENT_SHADER);													// shader program placeholders created. fShader is fragment shader
+
+	gl.shaderSource(vShader, vShaderSource);
+	gl.compileShader(vShader);
+
+	gl.shaderSource(fShader, fShaderSource);																// the strings which are the source code of the shaders
+	gl.compileShader(fShader)																				// are inserted in the placeholders; and then compiled
+
+	const program = gl.createProgram();																		// now, create a shader *program*, which can run the compiled shaders
+	gl.attachShader(program, vShader);																		// compilation result attached to program
+	gl.attachShader(program, fShader);																		// ..
+
+	gl.linkProgram(program);
+
+
+
+	//--------------- skybox cube variable positions ------------------//
+	var positionLocation = gl.getAttribLocation(program, "a_position");										// as marked above , the typescript will grab on "a_positions"
+																											// the vertex data will go there
+	var skyboxLocation = gl.getUniformLocation(program, "u_skybox");										// same here in the fragmentshader
+	var viewDirectionProjectionInverseLocation = gl.getUniformLocation(program, "u_viewDirectionProjectionInverse"); // here the inverse projection matrix will go
+
+
+
+	var positionBuffer = gl.createBuffer();																	// create the first position buffer. It is empty now
+	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);															// sent the buffer to GL
+
+	var positions = new Float32Array(
+		[
+		-1, -1,
+		1, -1,
+		-1,  1,
+		-1,  1,
+		1, -1,
+		1,  1,
+		]
+	);																										// These are the positions for a cube
+	gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);												// bind the values of positions with the last buffer created
+
+	var texture = gl.createTexture();																		// Texture from 2D images
+	gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);															// Wrap around a cube
+
+	const faceInfos = [																						// make an array
+		{
+		target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+		url: './../build/assets/images/skybox/front.JPG',
+		},
+		{
+		target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+		url: './../build/assets/images/skybox/back.JPG',
+		},
+		{
+		target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+		url: './../build/assets/images/skybox/left.JPG',
+		},
+		{
+		target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+		url: './../build/assets/images/skybox/right.JPG',
+		},
+		{
+		target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+		url: './../build/assets/images/skybox/up.JPG',
+		},
+		{
+		target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+		url: './../build/assets/images/skybox/down.JPG',
+		},
+	];
+
+
+	faceInfos.forEach((faceInfo) => {
+		const {target, url} = faceInfo;																		// faceinfos (plural) is an array.
+																											// each item will return a tuple
+
+		const level = 0;
+		const internalFormat = gl.RGBA;
+		const width = 512;																					// height and width should be a power of 2
+		const height = 512;
+		const format = gl.RGBA;
+		const type = gl.UNSIGNED_BYTE;
+
+																											// setup each face so it's immediately renderable
+		gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);					// use built in GL functions
+
+		// Asynchronously load an image
+		const image = new Image();
+		image.src = url;
+		image.addEventListener('load', function() {															// Now, images may take time to load, but once loaded
+																											// bind and generate mip map
+			gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+			gl.texImage2D(target, level, internalFormat, format, type, image);
+			gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+			skyBoxLoaded ++;																				// every time one image loads, increment this var.
+		});
+	});
+
+
+	gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+	gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);					// until images have loaded, use this option
+
+
+	//-------------------- Task bar Shaders ---------------------------//
+
+
+	var tBar_vShaderSrc = `
+		attribute vec4 a_position;																			// same tricks as before, but this will be a flat
+																											// task bar, so not much to be done
+
+		void main() {
+			gl_Position = a_position;
+		}
+	`;
+
+	var tBar_fShaderSrc = `
+		precision mediump float;
+		void main() {
+			gl_FragColor = vec4(0, 0.4, 0.25, 1); 															// change Task bar color here
+		}
+	`;
+
+
+	const tBar_vShader = gl.createShader(gl.VERTEX_SHADER);													// shader program placeholders created. vShader is vertex shader
+	const tBar_fShader = gl.createShader(gl.FRAGMENT_SHADER);												// shader program placeholders created. fShader is fragment shader
+
+	gl.shaderSource(tBar_vShader, tBar_vShaderSrc);
+	gl.compileShader(tBar_vShader);
+
+	gl.shaderSource(tBar_fShader, tBar_fShaderSrc);															// the strings which are the source code of the shaders
+	gl.compileShader(tBar_fShader)																			// are inserted in the placeholders; and then compiled
+
+	const tBar_program = gl.createProgram();																// now, create a shader *program*, which can run the compiled shaders
+	gl.attachShader(tBar_program, tBar_vShader);															// compilation result attached to program
+	gl.attachShader(tBar_program, tBar_fShader);															// ..
+
+	gl.linkProgram(tBar_program);
+
+	var positionAttributeLocationTriangle = gl.getAttribLocation(tBar_program, "a_position");				// again, we look for the variables to grab, but in task bar shader
+
+	var positionBufferTriangle = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferTriangle);
+
+	var positionsTriangle = [																				// 1,1 is top right, -1,-1 is bottom left
+		-1, -1,
+		 1, -1,
+		 1, -(((gl.drawingBufferHeight/2) - 12)/(gl.drawingBufferHeight/2)),								// ratio for 12 pixel high taskbar,
+																											// change for taskbar height
+		 1, -(((gl.drawingBufferHeight/2) - 12)/(gl.drawingBufferHeight/2)),
+		-1, -(((gl.drawingBufferHeight/2) - 12)/(gl.drawingBufferHeight/2)),
+		-1, -1,
+	];																										// 2 triangle. because we want a rectangular task bar
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positionsTriangle), gl.STATIC_DRAW);
+
+
+
+	//-------------------- Icon Shaders ---------------------------//
+
+
+	var icon_vShaderSrc = `
+		attribute vec2 a_position;
+		attribute vec2 a_texCoord;
+
+		uniform vec2 u_resolution;
+
+		varying vec2 v_texCoord;
+
+		void main() {
+
+			vec2 zeroToOne = a_position / u_resolution;
+			vec2 zeroToTwo = zeroToOne * 2.0;
+			vec2 clipSpace = zeroToTwo - 1.0;
+
+			gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+			v_texCoord = a_texCoord;
+		}
+	`;
+
+	var icon_fShaderSrc = `
+		precision mediump float;
+
+		uniform sampler2D u_image;
+
+		varying vec2 v_texCoord;
+
+		void main() {
+			gl_FragColor = texture2D(u_image, v_texCoord);
+		}
+	`;
+
+
+	const icon_vShader = gl.createShader(gl.VERTEX_SHADER);													// shader program placeholders created. vShader is vertex shader
+	const icon_fShader = gl.createShader(gl.FRAGMENT_SHADER);												// shader program placeholders created. fShader is fragment shader
+
+	gl.shaderSource(icon_vShader, icon_vShaderSrc);
+	gl.compileShader(icon_vShader);
+
+	gl.shaderSource(icon_fShader, icon_fShaderSrc);															// the strings which are the source code of the shaders
+	gl.compileShader(icon_fShader)																			// are inserted in the placeholders; and then compiled
+
+	const icon_program = gl.createProgram();																// now, create a shader *program*, which can run the compiled shaders
+	gl.attachShader(icon_program, icon_vShader);															// compilation result attached to program
+	gl.attachShader(icon_program, icon_fShader);															// ..
+
+	gl.linkProgram(icon_program);
+
+	var positionLocationIcon = gl.getAttribLocation(icon_program, "a_position");
+	var texcoordLocationIcon = gl.getAttribLocation(icon_program, "a_texCoord");
+
+
+	gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+
+
+
+
+	// drawFrameItems();
+
+	// requestAnimationFrame(drawFrameItems);
+
+
+	// function drawFrameItems() {
+
+	// 	drawSkyBoxFrame();																					// run the skybox specific code
+	// 	drawTaskBar();																						// run the taskbar specific code
+
+	// 	drawIcons();																						// draw the icons for 2 applications
+
+	// }
+
+
+
+
+	setTimeout(
+		function(){
+			console.log(skyBoxLoaded);
+			if(skyBoxLoaded >5) drawSkyBoxFrame;
+		},3);
+
+	function drawTaskBar() {
+
+		gl.useProgram(tBar_program);
+		gl.enableVertexAttribArray(positionAttributeLocationTriangle);
+
+		// Bind the position buffer.
+		gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferTriangle);
+
+		// Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+		var size = 2;          // 2 components per iteration
+		var type = gl.FLOAT;   // the data is 32bit floats
+		var normalize = false; // don't normalize the data
+		var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+		var offset = 0;        // start at the beginning of the buffer
+		gl.vertexAttribPointer(positionAttributeLocationTriangle, size, type, normalize, stride, offset);
+
+
+
+
+
+		// draw
+		var primitiveType = gl.TRIANGLES;
+		var offset = 0;
+		var count = 3;
+		gl.drawArrays(primitiveType, offset, count);														// half of the rectangular taskbar
+
+		primitiveType = gl.TRIANGLES;
+		offset = 3;
+		count = 3;
+		gl.drawArrays(primitiveType, offset, count);														// other half
+
+	}
+
+	function drawSkyBoxFrame() {
+
+
+
+
+		gl.useProgram(program);
+
+		gl.enableVertexAttribArray(positionLocation);
+		gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+
+		var size = 2;																							// 2 components per iteration
+		var type = gl.FLOAT;																					// the data is 32bit floats
+		var normalize = false;																					// don't normalize the data
+		var stride = 0;																							// 0 = move forward size * sizeof(type) each iteration to get the next position
+		var offset = 0;																							// start at the beginning of the buffer
+		gl.vertexAttribPointer(positionLocation, size, type, normalize, stride, offset);
+
+
+
+		var aspect = canvas.clientWidth / canvas.clientHeight;
+
+		var viewDirectionProjectionInverseMatrix = [
+			0.33781543374061584, 0, 0.6931547522544861,4.863637048657665e-9,
+			0, 0.5773502588272095, 0, 0,
+			0, 0, 1, -0.499750018119812,
+			-0.8989261984825134, 0, -0.43810003995895386, 0.5002500414848328];
+
+	​
+
+		gl.uniformMatrix4fv( viewDirectionProjectionInverseLocation, false, viewDirectionProjectionInverseMatrix);
+
+		gl.uniform1i(skyboxLocation, 0);
+		gl.depthFunc(gl.LEQUAL);
+
+		gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
+
+
+
+
+
+
+	}
+
+	function drawIcons() {
+
+		const icons = [
+			'./../build/assets/images/icons/01.jpg',
+			'./../build/assets/images/icons/02.jpg',
+		]
+
+		var ii = 0 ;
+
+
+		icons.forEach((icon) => {
+
+			var positionBufferIcon = gl.createBuffer();
+
+			gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferIcon);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+				gl.drawingBufferWidth /5 * (ii+1) , gl.drawingBufferHeight /5 * (ii+1),
+				gl.drawingBufferWidth /5 * (ii+1) + 20, gl.drawingBufferHeight /5 * (ii+1),
+				gl.drawingBufferWidth /5 * (ii+1) , gl.drawingBufferHeight /5 * (ii+1) + 20,
+				gl.drawingBufferWidth /5 * (ii+1) , gl.drawingBufferHeight /5 * (ii+1) + 20,
+				gl.drawingBufferWidth /5 * (ii+1) + 20, gl.drawingBufferHeight /5 * (ii+1),
+				gl.drawingBufferWidth /5 * (ii+1) + 20, gl.drawingBufferHeight /5 * (ii+1) + 20,
+			]), gl.STATIC_DRAW);																							//
+
+
+			var texcoordBufferIcon = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBufferIcon);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+				0.0,  0.0,
+				1.0,  0.0,
+				0.0,  1.0,
+				0.0,  1.0,
+				1.0,  0.0,
+				1.0,  1.0,
+			]), gl.STATIC_DRAW);
+
+
+			var texture01 = gl.createTexture();
+			gl.bindTexture(gl.TEXTURE_2D, texture01);
+
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+
+			gl.useProgram(icon_program);
+
+
+			var image = new Image();
+			image.src = icon;
+
+			image.addEventListener('load', function() {
+				gl.bindTexture(gl.TEXTURE_2D, texture01);
+				gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+				var resolutionLocation = gl.getUniformLocation(icon_program, "u_resolution");
+				var u_image0Location = gl.getUniformLocation(icon_program, "u_image0");
+
+
+				gl.enableVertexAttribArray(positionLocationIcon);
+				gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferIcon);
+
+				var size = 2;          // 2 components per iteration
+				var type = gl.FLOAT;   // the data is 32bit floats
+				var normalize = false; // don't normalize the data
+				var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+				var offset = 0;        // start at the beginning of the buffer
+				gl.vertexAttribPointer(positionLocationIcon, size, type, normalize, stride, offset);
+
+
+				gl.enableVertexAttribArray(texcoordLocationIcon);
+				gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBufferIcon);
+				var size = 2;          // 2 components per iteration
+				var type = gl.FLOAT;   // the data is 32bit floats
+				var normalize = false; // don't normalize the data
+				var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+				var offset = 0;        // start at the beginning of the buffer
+				gl.vertexAttribPointer(texcoordLocationIcon, size, type, normalize, stride, offset);
+
+				gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
+
+				gl.uniform1i(u_image0Location, 0);
+
+				gl.activeTexture(gl.TEXTURE0);
+				gl.bindTexture(gl.TEXTURE_2D, texture01);
+
+				gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+
+
+			});
+
+
+
+			ii = ii +1;
+
+		});
+
+
+
+	}
+
+
+
+
+
+																											console.log("Skybox drawn");
+
+
+}
+
+drawDesktop();
+
+
+
+
+
+
+
+
+
+
